@@ -8,7 +8,7 @@ vector<double>::iterator second_occur(vector<double> &v, double x) {
 	vector<double>::iterator i;
 	i = find(v.begin(), v.end(), x);
 	if (i != v.end()) i = find(i+1, v.end(), x);
-	return i
+	return i;
 }
 
 int main()
