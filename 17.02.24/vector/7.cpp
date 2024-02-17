@@ -17,8 +17,9 @@ vector<double>::iterator last_occure(vector<double>& v, double x) {
 
 int main()
 {
-	setlocale(LC_ALL, "Russian");
+  setlocale(LC_ALL, "Russian");
   vector <double> g{ 3, 2, 5, 9, 4, 5, 7, 1, 5, 8 };
+	vector<double>::iterator i;
   i = last_occure(g, 5);
   cout << *i << " " << *(i+1);
 }
