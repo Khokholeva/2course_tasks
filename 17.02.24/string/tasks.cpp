@@ -3,6 +3,7 @@
 #include <string>
 using namespace std;
 
+//task 1
 bool valid_ip(string s) {
 	int dot, prev = 0;
 	string a;
@@ -30,14 +31,25 @@ bool valid_ip(string s) {
 	return true;
 }
 
+//task 2
+string bracket(string base, string pattern) {
+	int n = pattern.size();
+	int ind = 0;
+	ind = base.find(pattern, ind);
+	while (ind != -1) {
+		base.insert(ind, "(");
+		base.insert(ind + n + 1, ")");
+		ind += n + 2;
+		ind = base.find(pattern, ind);
+	}
+	return base;
+
+}
+
+//task 3
+
 int main()
 {
 	setlocale(LC_ALL, "Russian");
-	cout << valid_ip("192.168.0.1") << endl;
-	cout << valid_ip("124.4.225.60") << endl;
-	cout << valid_ip("192.168.0") << endl;
-	cout << valid_ip("192.168.0.600") << endl;
-	cout << valid_ip("192.a10.0.6") << endl;
-	cout << valid_ip("192.10.0.1b") << endl;
 	return EXIT_SUCCESS;
 }
