@@ -1,8 +1,6 @@
 #include <iostream>
 #include <cstdlib>
-#include <vector>
-#include <algorithm>
-#include <string>
+#include <initializer_list>
 using namespace std;
 
 struct Polynomial
@@ -17,9 +15,21 @@ struct Polynomial
 			coeffs[i] = c[i];
 		}
 	}
+	Polynomial (const Polynomial& a) {
+		degree = a.degree;
+		coeffs = new double[degree + 1];
+		for (int i = 0; i <= degree; i++) {
+			coeffs[i] = a.coeffs[i];
+		}
+	}
+	Polynomial(int x): degree(0), coeffs(new double[1] {double(x)}) {}
+	Polynomial(const initializer_list<double>& t): degree(t.size() - 1), coeffs(new double[t.size()]) {
+		copy(t.begin(), t.end(), coeffs);
+	}
 	~Polynomial() {
 		delete[] coeffs;
 	}
+
 	double value(double x) {
 		double ans = 0;
 		double x_pow = 1;
@@ -36,7 +46,6 @@ struct Polynomial
 		else cout << "Выход за пределы массива" << endl;
 		return c;
 	}
-
 	Polynomial& operator= (const Polynomial & a) {
 	if(this == &a) { // проверка на самоприсваивание
 		return *this;
@@ -153,6 +162,7 @@ Polynomial operator%(Polynomial& a, Polynomial& b) {
 	return a - c;
 }
 
+
 int main()
 {
 	setlocale(LC_ALL, "Russian");
@@ -174,10 +184,10 @@ int main()
 	b[2] = 2;
 	cout << b << " (5) = " << b.value(5) << endl;
 
+	Polynomial l{ 1,2,3,4,5 };
+	cout << l << endl;
 	Polynomial x, y;
 	cin >> x >> y;
-	
-
 	Polynomial div_xy = x / y;
 	Polynomial mod_xy = x % y;
 	cout << x << " / " << y << " = " << "(" << div_xy << ")*(" << y << ") + " << mod_xy << endl;
