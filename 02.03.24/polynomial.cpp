@@ -1,5 +1,8 @@
 #include <iostream>
 #include <cstdlib>
+#include <vector>
+#include <algorithm>
+#include <string>
 using namespace std;
 
 struct Polynomial
@@ -28,6 +31,13 @@ struct Polynomial
 			x_pow *= x;
 		}
 		return ans;
+	}
+
+	double& operator[] (int d) {
+		static double c = -1;
+		if (0 <= d && d <= degree) return coeffs[d];
+		else cout << "Выход за пределы массива" << endl;
+		return c;
 	}
 };
 
@@ -90,6 +100,89 @@ ostream& operator << (ostream& st, Polynomial &a)
 
 }
 
+istream& operator >> (istream& st, Polynomial& a)
+{
+	st >> a.degree;
+	a.coeffs = new double[a.degree + 1];
+	for (int i = 0; i <= a.degree; i++) {
+		st >> a.coef(i);
+	}
+	return st;
+}
+
+Polynomial operator/(Polynomial &a, Polynomial &b) {
+	int b_d = b.degree;
+	int a_d = a.degree;
+	while (b_d >= 0 and b.coef(b_d) == 0) b_d -= 1;
+	if (b_d == -1) {
+		Polynomial ans(0, { 0 });
+		return ans;
+	}
+	int d = a.degree - b_d;
+	double x;
+	double* res = new double[d + 1] {0};
+	double* temp = new double[a_d + 1];
+	for (int i = 0; i <= a_d; i++) {
+		temp[i] = a[i];
+	}
+	cout << "деление" << endl;
+	for (int i = 0; i <= d; i++) {
+		for (int i = 0; i <= a_d; i++) {
+			cout << temp[i] << " ";
+		}
+		cout << endl;
+		x = temp[a_d - i] / b[b_d];
+		res[d - i] = x;
+		for (int j = 0; j <= b_d; j++) {
+			temp[a_d - j] -= x * b[b_d - j];
+			
+		}
+	}
+	for (int i = 0; i <= a_d; i++) {
+		cout << temp[i] << " ";
+	}
+	cout << endl;
+	for (int i = 0; i <= d; i++) {
+		cout << res[i] << " ";
+	}
+	cout << endl;
+	Polynomial ans(d, res);
+	return ans;
+}
+
+Polynomial operator%(Polynomial& a, Polynomial& b) {
+	Polynomial c = a / b;
+	Polynomial mul = c * b;
+	return a - mul;
+}
+
+
+
+string brace_form(string base) {
+	string part, res;
+	int n = 0, prev = 0, counter = 0;
+	//разделяем на части с внешними запятыми
+	n = base.find_first_of("{},");
+	while (n != -1) {
+		if (base[n] == '{') counter += 1;
+		else if (base[n] == '}') counter -= 1;
+		else if (counter == 0) {
+			part = base.substr(prev, n - prev);
+			part = brace_form(part);
+			res += part + ",";
+			prev = n + 1;
+		}
+		n = base.find_first_of("{},", n+1);
+	}
+	part = base.substr(prev);
+	part = brace_form(part);
+	res += part;
+
+	//находим скобки
+
+	return res;
+}
+
 int main()
 {
 	setlocale(LC_ALL, "Russian");
@@ -110,5 +203,13 @@ int main()
 	
 	b.coef(2) = 2;
 	cout << b << " (5) = " << b.value(5) << endl;
+
+	Polynomial x;
+	cin >> x;
+	cout << x << endl;
+
+	Polynomial div_ab = b / a;
+	Polynomial mod_ab = b % a;
+	cout << b << " / " << a << " = " << "(" << div_ab << ")*(" << a << ") + " << mod_ab << endl;
 	return EXIT_SUCCESS;
 }
