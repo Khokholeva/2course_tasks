@@ -20,9 +20,6 @@ struct Polynomial
 	~Polynomial() {
 		delete[] coeffs;
 	}
-	double& coef(int d) {
-		if (0<= d && d <= degree) return coeffs[d];
-	}
 	double value(double x) {
 		double ans = 0;
 		double x_pow = 1;
@@ -39,6 +36,19 @@ struct Polynomial
 		else cout << "Выход за пределы массива" << endl;
 		return c;
 	}
+
+	Polynomial& operator= (const Polynomial & a) {
+	if(this == &a) { // проверка на самоприсваивание
+		return *this;
+	}
+	degree = a.degree;
+	delete[] coeffs;
+	coeffs = new double[degree + 1];
+	for (int i = 0; i <= degree; i++) {
+		coeffs[i] = a.coeffs[i];
+	}
+	return *this;
+	}
 };
 
 Polynomial operator+(Polynomial& a, Polynomial& b) {
@@ -48,8 +58,8 @@ Polynomial operator+(Polynomial& a, Polynomial& b) {
 	double temp;
 	for (int i = 0; i <= d_c; i++) {
 		temp = 0;
-		if (i <= a.degree) temp += a.coef(i);
-		if (i <= b.degree) temp += b.coef(i);
+		if (i <= a.degree) temp += a[i];
+		if (i <= b.degree) temp += b[i];
 		coef_c[i] = temp;
 	}
 	Polynomial c(d_c, coef_c);
@@ -63,8 +73,8 @@ Polynomial operator-(Polynomial& a, Polynomial& b) {
 	double temp;
 	for (int i = 0; i <= d_c; i++) {
 		temp = 0;
-		if (i <= a.degree) temp += a.coef(i);
-		if (i <= b.degree) temp -= b.coef(i);
+		if (i <= a.degree) temp += a[i];
+		if (i <= b.degree) temp -= b[i];
 		coef_c[i] = temp;
 	}
 	Polynomial c(d_c, coef_c);
@@ -77,7 +87,7 @@ Polynomial operator*(Polynomial& a, Polynomial& b) {
 	coef_c = new double[d_c + 1] {};
 	for (int i = 0; i <= a.degree; i++) {
 		for (int j = 0; j <= b.degree; j++) {
-			coef_c[i + j] += a.coef(i) * b.coef(j);
+			coef_c[i + j] += a[i] * b[j];
 		}
 	}
 	Polynomial c(d_c, coef_c);
@@ -87,16 +97,16 @@ Polynomial operator*(Polynomial& a, Polynomial& b) {
 ostream& operator << (ostream& st, Polynomial &a)
 {
 	int t = 0;
-	while (t <= a.degree and a.coef(t) == 0) t++;
+	while (t <= a.degree and a[t] == 0) t++;
 	if (t > a.degree) return st << 0;
 	for (int i = a.degree; i > t; i--) {
-		if (i == 1 and a.coef(i) != 0) st << a.coef(i) << "*x" << " + ";
-		else if (a.coef(i) != 0) st << a.coef(i) << "*x^" << i << " + ";
+		if (i == 1 and a[i] != 0) st << a[i] << "*x" << " + ";
+		else if (a[i] != 0) st << a[i] << "*x^" << i << " + ";
 
 	}
-	if (t > 1) return st << a.coef(t) << "*x^" << t;
-	else if (t == 1) return st << a.coef(t) << "*x";
-	else return st << a.coef(t);
+	if (t > 1) return st << a[t] << "*x^" << t;
+	else if (t == 1) return st << a[t] << "*x";
+	else return st << a[t];
 
 }
 
@@ -105,7 +115,7 @@ istream& operator >> (istream& st, Polynomial& a)
 	st >> a.degree;
 	a.coeffs = new double[a.degree + 1];
 	for (int i = 0; i <= a.degree; i++) {
-		st >> a.coef(i);
+		st >> a[i];
 	}
 	return st;
 }
@@ -113,7 +123,7 @@ istream& operator >> (istream& st, Polynomial& a)
 Polynomial operator/(Polynomial &a, Polynomial &b) {
 	int b_d = b.degree;
 	int a_d = a.degree;
-	while (b_d >= 0 and b.coef(b_d) == 0) b_d -= 1;
+	while (b_d >= 0 and b[b_d] == 0) b_d -= 1;
 	if (b_d == -1) {
 		Polynomial ans(0, { 0 });
 		return ans;
@@ -125,12 +135,7 @@ Polynomial operator/(Polynomial &a, Polynomial &b) {
 	for (int i = 0; i <= a_d; i++) {
 		temp[i] = a[i];
 	}
-	cout << "деление" << endl;
 	for (int i = 0; i <= d; i++) {
-		for (int i = 0; i <= a_d; i++) {
-			cout << temp[i] << " ";
-		}
-		cout << endl;
 		x = temp[a_d - i] / b[b_d];
 		res[d - i] = x;
 		for (int j = 0; j <= b_d; j++) {
@@ -138,49 +143,14 @@ Polynomial operator/(Polynomial &a, Polynomial &b) {
 			
 		}
 	}
-	for (int i = 0; i <= a_d; i++) {
-		cout << temp[i] << " ";
-	}
-	cout << endl;
-	for (int i = 0; i <= d; i++) {
-		cout << res[i] << " ";
-	}
-	cout << endl;
 	Polynomial ans(d, res);
 	return ans;
 }
 
 Polynomial operator%(Polynomial& a, Polynomial& b) {
 	Polynomial c = a / b;
-	Polynomial mul = c * b;
-	return a - mul;
-}
-
-
-
-string brace_form(string base) {
-	string part, res;
-	int n = 0, prev = 0, counter = 0;
-	//разделяем на части с внешними запятыми
-	n = base.find_first_of("{},");
-	while (n != -1) {
-		if (base[n] == '{') counter += 1;
-		else if (base[n] == '}') counter -= 1;
-		else if (counter == 0) {
-			part = base.substr(prev, n - prev);
-			part = brace_form(part);
-			res += part + ",";
-			prev = n + 1;
-		}
-		n = base.find_first_of("{},", n+1);
-	}
-	part = base.substr(prev);
-	part = brace_form(part);
-	res += part;
-
-	//находим скобки
-
-	return res;
+	c = c * b;
+	return a - c;
 }
 
 int main()
@@ -201,15 +171,15 @@ int main()
 	Polynomial c;
 	cout << c << " (3) = " << c.value(3) << endl;
 	
-	b.coef(2) = 2;
+	b[2] = 2;
 	cout << b << " (5) = " << b.value(5) << endl;
 
-	Polynomial x;
-	cin >> x;
-	cout << x << endl;
+	Polynomial x, y;
+	cin >> x >> y;
+	
 
-	Polynomial div_ab = b / a;
-	Polynomial mod_ab = b % a;
-	cout << b << " / " << a << " = " << "(" << div_ab << ")*(" << a << ") + " << mod_ab << endl;
+	Polynomial div_xy = x / y;
+	Polynomial mod_xy = x % y;
+	cout << x << " / " << y << " = " << "(" << div_xy << ")*(" << y << ") + " << mod_xy << endl;
 	return EXIT_SUCCESS;
 }
