@@ -22,7 +22,7 @@ struct Polynomial
 			coeffs[i] = a.coeffs[i];
 		}
 	}
-	Polynomial(int x): degree(0), coeffs(new double[1] {double(x)}) {}
+	Polynomial(int x): degree(0), coeffs(new double[1] {1.0 * x}) {}
 	Polynomial(const initializer_list<double>& t): degree(t.size() - 1), coeffs(new double[t.size()]) {
 		copy(t.begin(), t.end(), coeffs);
 	}
