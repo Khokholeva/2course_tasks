@@ -11,82 +11,8 @@ struct BNode
 
 };
 
-void f_print(BNode* r, int d = 0)
-{
-	if (r == nullptr) return;
-	f_print(r->right, d + 3);
-	for (int i = 0; i < d; i++)
-		cout << ' ';
-	cout << r->data << endl;
-	f_print(r->left, d + 3);
-}
-
-void f_scale(BNode* r) {
-	if (r == nullptr) return;
-	r->data *= 3;
-	f_scale(r->left);
-	f_scale(r->right);
-}
-int f_sum(BNode* r) {
-	if (r == nullptr) return 0;
-	return r->data + f_sum(r->left) + f_sum(r->right);
-}
-
-int f_count_neg(BNode* r) {
-	if (r == nullptr) return 0;
-	int d = r->data < 0 ? 1 : 0;
-	return f_count_neg(r->left) + f_count_neg(r->right) + d;
-}
-
-int f_height(BNode* r) {
-	if (r == nullptr) return 0;
-	int a = f_height(r->left) + 1, b = f_height(r->right) + 1;
-	return a > b ? a : b;
-}
-
-void f_reflect(BNode* r) {
-	if (r == nullptr) return;
-	f_reflect(r->right);
-	f_reflect(r->left);
-	BNode* p = r->right;
-	r->right = r->left;
-	r->left = p;
-}
-
-int f_mult(BNode* r) {
-	if (r == nullptr) return 1;
-	if (r->right != nullptr and r->left != nullptr) {
-		return r->data * f_mult(r->right) * f_mult(r->left);
-	}
-	return 1;
-}
-
-int f_eval(BNode* r) {
-	if (r->right == nullptr) return r->data;
-	if (r->data == 1) return f_eval(r->left) + f_eval(r->right); 
-	if (r->data == 2) return f_eval(r->left) - f_eval(r->right);
-	if (r->data == 3) return f_eval(r->left) * f_eval(r->right);
-	if (r->data == 4) return f_eval(r->left) / f_eval(r->right);
-}
-
-BNode* f_find(BNode* r, int d) {
-	if (r == nullptr) return nullptr;
-	if (r->data == d) return r;
-	BNode* p = f_find(r->left, d);
-	if (p != nullptr) return p;
-	BNode * q = f_find(r->right, d);
-	return q;
-}
-
-int f_min(BNode* r) {
-	int a = r->data, b = r->data;
-	if (r->left != nullptr) a = f_min(r->left);
-	if (r->right != nullptr) b = f_min(r->right);
-	return (r->data < a and r->data < b) ? r->data : (a < b ? a : b);
-}
 struct BTree
 {
-	BNode* root;
 	BTree(BNode* p) : root(p) {}
 	BTree(int d, BNode* left = nullptr, BNode* right = nullptr) : root(new BNode(d, left, right)) {}
 
@@ -247,7 +173,87 @@ struct BTree
 	int min() {
 		return f_min(root);
 	}
+
+	private:
+		BNode* root;
+		static void f_print(BNode* r, int d = 0);
+		static void f_scale(BNode* r);
+		static int f_sum(BNode* r);
+		static int f_count_neg(BNode* r);
+		static int f_height(BNode* r);
+		static void f_reflect(BNode* r);
+		static int f_mult(BNode* r);
+		static int f_eval(BNode* r);
+		static BNode* f_find(BNode* r, int d);
+		static int f_min(BNode* r);
+
 };
+
+void BTree::f_print(BNode* r, int d)
+{
+	if (r == nullptr) return;
+	f_print(r->right, d + 3);
+	for (int i = 0; i < d; i++)
+		cout << ' ';
+	cout << r->data << endl;
+	f_print(r->left, d + 3);
+}
+void BTree::f_scale(BNode* r) {
+	if (r == nullptr) return;
+	r->data *= 3;
+	f_scale(r->left);
+	f_scale(r->right);
+}
+int BTree::f_sum(BNode* r) {
+	if (r == nullptr) return 0;
+	return r->data + f_sum(r->left) + f_sum(r->right);
+}
+int BTree::f_count_neg(BNode* r) {
+	if (r == nullptr) return 0;
+	int d = r->data < 0 ? 1 : 0;
+	return f_count_neg(r->left) + f_count_neg(r->right) + d;
+}
+int BTree::f_height(BNode* r) {
+	if (r == nullptr) return 0;
+	int a = f_height(r->left) + 1, b = f_height(r->right) + 1;
+	return a > b ? a : b;
+}
+void BTree::f_reflect(BNode* r) {
+	if (r == nullptr) return;
+	f_reflect(r->right);
+	f_reflect(r->left);
+	BNode* p = r->right;
+	r->right = r->left;
+	r->left = p;
+}
+int BTree::f_mult(BNode* r) {
+	if (r == nullptr) return 1;
+	if (r->right != nullptr and r->left != nullptr) {
+		return r->data * f_mult(r->right) * f_mult(r->left);
+	}
+	return 1;
+}
+int BTree::f_eval(BNode* r) {
+	if (r->right == nullptr) return r->data;
+	if (r->data == 1) return f_eval(r->left) + f_eval(r->right);
+	if (r->data == 2) return f_eval(r->left) - f_eval(r->right);
+	if (r->data == 3) return f_eval(r->left) * f_eval(r->right);
+	if (r->data == 4) return f_eval(r->left) / f_eval(r->right);
+}
+BNode* BTree::f_find(BNode* r, int d) {
+	if (r == nullptr) return nullptr;
+	if (r->data == d) return r;
+	BNode* p = f_find(r->left, d);
+	if (p != nullptr) return p;
+	BNode* q = f_find(r->right, d);
+	return q;
+}
+int BTree::f_min(BNode* r) {
+	int a = r->data, b = r->data;
+	if (r->left != nullptr) a = f_min(r->left);
+	if (r->right != nullptr) b = f_min(r->right);
+	return (r->data < a and r->data < b) ? r->data : (a < b ? a : b);
+}
 
 BNode* form_tree(string data) {
 	int a, b, c, d;
@@ -300,7 +306,8 @@ int main()
 
 	cout << endl;
 	BNode* q = input();
-	f_print(q);
+	BTree tree2(q);
+	tree2.print();
 	//1(2(4(.,.),.),3(.,5(6(.,.),7(.,.))))
 	return EXIT_SUCCESS;
 }
