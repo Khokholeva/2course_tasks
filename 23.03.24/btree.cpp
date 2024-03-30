@@ -123,6 +123,7 @@ struct BTree
 			if (p->left != nullptr) p = p->left;
 			else p = p->right;
 		}
+		return p;
 	}
 	void delLeftmostLeaf() {
 		BNode* p = root;
@@ -136,6 +137,24 @@ struct BTree
 		else if (q != nullptr) q->right = nullptr;
 		else root = nullptr;
 		delete p;
+	}
+	BNode* getSecLeftLeaf() {
+		BNode* p = root, *q = nullptr;
+		while (p->left != nullptr or p->right != nullptr) {
+			if (p->left != nullptr and p->right != nullptr) q = p;
+			if (p->left != nullptr) p = p->left;
+			else p = p->right;
+		}
+		if (q == nullptr) {
+			cout << "No second leaf" << endl;
+			return q;
+		}
+		p = q->right;
+		while (p->left != nullptr or p->right != nullptr) {
+			if (p->left != nullptr) p = p->left;
+			else p = p->right;
+		}
+		return p;
 	}
 };
 
