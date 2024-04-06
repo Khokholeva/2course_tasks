@@ -15,7 +15,11 @@ struct BTree
 {
 	BTree(BNode* p) : root(p) {}
 	BTree(int d, BNode* left = nullptr, BNode* right = nullptr) : root(new BNode(d, left, right)) {}
+	~BTree() {
+		f_del(root);
+	}
 
+	//btree - задачи
 	void print()
 	{
 		f_print(root);
@@ -146,6 +150,8 @@ struct BTree
 		}
 		return p;
 	}
+
+	//traverse - вызовы
 	void scale() {
 		f_scale(root);
 	}
@@ -174,9 +180,28 @@ struct BTree
 		return f_min(root);
 	}
 
+	//traverse_part2 - вызовы
+	void del0() {
+		f_del0(root);
+	}
+	void delLeaves() {
+		f_delLeaves(root);
+	}
+	void enlarge(int d) {
+		f_enlarge(root, d);
+	}
+	void del1() {
+		f_del1(root);
+	}
+	int sum_alt() {
+		return f_sum_alt(root, 0);
+	}
+
 	private:
 		BNode* root;
 		static void f_print(BNode* r, int d = 0);
+
+		//traverse - заголовки
 		static void f_scale(BNode* r);
 		static int f_sum(BNode* r);
 		static int f_count_neg(BNode* r);
@@ -187,6 +212,14 @@ struct BTree
 		static BNode* f_find(BNode* r, int d);
 		static int f_min(BNode* r);
 
+		static void f_del(BNode*& r);
+
+		//traverse_part2 - заголовки
+		static void f_del0(BNode*& r);
+		static void f_delLeaves(BNode*& r);
+		static void f_enlarge(BNode* r, int d);
+		static void f_del1(BNode*& r);
+		static int f_sum_alt(BNode* r, int s);
 };
 
 void BTree::f_print(BNode* r, int d)
@@ -198,6 +231,8 @@ void BTree::f_print(BNode* r, int d)
 	cout << r->data << endl;
 	f_print(r->left, d + 3);
 }
+
+//traverse - задачи
 void BTree::f_scale(BNode* r) {
 	if (r == nullptr) return;
 	r->data *= 3;
@@ -255,6 +290,70 @@ int BTree::f_min(BNode* r) {
 	return (r->data < a and r->data < b) ? r->data : (a < b ? a : b);
 }
 
+void BTree::f_del(BNode*& p) // указатель p передается по ссылке
+{
+	if (p == nullptr) // дерево пусто
+		return;
+	f_del(p->left); // удалить левое поддерево
+	f_del(p->right); // удалить правое поддерево
+	delete p; // удалить сам узел
+	p = nullptr; // обнулить указатель
+}
+
+//traverse_part2 - задачи
+void BTree::f_del0(BNode*& r) {
+	if (r == nullptr) return;
+	if (r->data == 0) { f_del(r); return; }
+	f_del0(r->right);
+	f_del0(r->left);
+}
+void BTree::f_delLeaves(BNode*& r) {
+	if (r == nullptr) return;
+	if (r->right == nullptr and r->left == nullptr) {
+		delete r;
+		r = nullptr;
+		return;
+	}
+	f_delLeaves(r->left);
+	f_delLeaves(r->right);
+}
+void BTree::f_enlarge(BNode* r, int d) {
+	if (r == nullptr) return;
+	if (r->left != nullptr) f_enlarge(r->left, d);
+	else {
+		BNode* a = new BNode(d);
+		r->left = a;
+	}
+	if (r->right != nullptr) f_enlarge(r->right, d);
+	else {
+		BNode* b = new BNode(d);
+		r->right = b;
+	}
+}
+void BTree::f_del1(BNode*& r) {
+	if (r == nullptr) return;
+	f_del1(r->right);
+	f_del1(r->left);
+	if (r->left != nullptr and r->left->data == 1) {
+		BNode* m = r->left->right;
+		f_del(r->left->left);
+		delete r->left;
+		r->left = m;
+	}
+	if (r->right != nullptr and r->right->data == 1) {
+		BNode* n = r->right->right;
+		f_del(r->right->left);
+		delete r->right;
+		r->right = n;
+	}
+}
+int BTree::f_sum_alt(BNode* r, int s) {
+	if (r == nullptr) return 0;
+	return f_sum_alt(r->left, -1) +f_sum_alt(r->right, 1) + s * r->data;
+
+}
+
+
 BNode* form_tree(string data) {
 	int a, b, c, d;
 	int counter = 0;
@@ -281,33 +380,28 @@ BNode* input() {
 	cin >> data;
 	return form_tree(data);
 }
+
+
 int main()
 {
 	setlocale(LC_ALL, "Russian");
-	BNode* p7 = new BNode(7),
+	BNode* p11 = new BNode(11),
+		* p10 = new BNode(10, p11),
+		* p9 = new BNode(9),
+		* p8 = new BNode(8),
+		* p7 = new BNode(1, nullptr, p10),
 		* p6 = new BNode(6),
-		* p5 = new BNode(5),
-		* p4 = new BNode(4),
+		* p5 = new BNode(5, p9),
+		* p4 = new BNode(4, p8),
 		* p3 = new BNode(3, p6, p7),
-		* p2 = new BNode(2, p4, p5),
-		* p1 = new BNode(1, p2, p3);
+		* p2 = new BNode(1, p4, p5),
+		* p1 = new BNode(2, p2, p3);
 	BTree tree(p1);
 	tree.print();
-	cout << "sum = " << tree.sum() << endl;
-	cout << "mult = " << tree.mult() << endl;
-	cout << "eval = " << tree.eval() << endl;
-	tree.scale();
-	tree.rotateLeft();
+	cout << endl << "sum alt " << tree.sum_alt() << endl << endl;
+	tree.del1();
+	tree.enlarge(-1);
+	
 	tree.print();
-	tree.reflect();
-	tree.print();
-	cout << "height: " << tree.height() << endl;
-	cout << "min: " << tree.min() << endl;
-
-	cout << endl;
-	BNode* q = input();
-	BTree tree2(q);
-	tree2.print();
-	//1(2(4(.,.),.),3(.,5(6(.,.),7(.,.))))
 	return EXIT_SUCCESS;
 }
