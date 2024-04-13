@@ -10,11 +10,25 @@ struct BNode
 	BNode(int d, BNode* l = nullptr, BNode* r = nullptr) : data(d), left(l), right(r) {}
 
 };
+//traverse extra - 1
+BNode* copy(BNode* r) {
+	if (r == nullptr) return nullptr;
+	BNode* p = new BNode(0);
+	p->data = r->data;
+	p->left = copy(r->left);
+	p->right = copy(r->right);
+	return p;
+}
 
 struct BTree
 {
+	BNode* root;
 	BTree(BNode* p) : root(p) {}
 	BTree(int d, BNode* left = nullptr, BNode* right = nullptr) : root(new BNode(d, left, right)) {}
+	BTree() : root(nullptr) {}
+	BTree(const BTree& x) {
+		root = copy(x.root);
+	}
 	~BTree() {
 		f_del(root);
 	}
@@ -163,7 +177,7 @@ struct BTree
 			else if (ans->right != nullptr) return ans->right;
 		}
 		return nullptr;
-	
+
 	}
 
 	//traverse - вызовы
@@ -211,30 +225,30 @@ struct BTree
 	int sum_alt() {
 		return f_sum_alt(root, 0);
 	}
+	
+private:
+	
+	static void f_print(BNode* r, int d = 0);
 
-	private:
-		BNode* root;
-		static void f_print(BNode* r, int d = 0);
+	//traverse - заголовки
+	static void f_scale(BNode* r);
+	static int f_sum(BNode* r);
+	static int f_count_neg(BNode* r);
+	static int f_height(BNode* r);
+	static void f_reflect(BNode* r);
+	static int f_mult(BNode* r);
+	static int f_eval(BNode* r);
+	static BNode* f_find(BNode* r, int d);
+	static int f_min(BNode* r);
 
-		//traverse - заголовки
-		static void f_scale(BNode* r);
-		static int f_sum(BNode* r);
-		static int f_count_neg(BNode* r);
-		static int f_height(BNode* r);
-		static void f_reflect(BNode* r);
-		static int f_mult(BNode* r);
-		static int f_eval(BNode* r);
-		static BNode* f_find(BNode* r, int d);
-		static int f_min(BNode* r);
+	static void f_del(BNode*& r);
 
-		static void f_del(BNode*& r);
-
-		//traverse_part2 - заголовки
-		static void f_del0(BNode*& r);
-		static void f_delLeaves(BNode*& r);
-		static void f_enlarge(BNode* r, int d);
-		static void f_del1(BNode*& r);
-		static int f_sum_alt(BNode* r, int s);
+	//traverse_part2 - заголовки
+	static void f_del0(BNode*& r);
+	static void f_delLeaves(BNode*& r);
+	static void f_enlarge(BNode* r, int d);
+	static void f_del1(BNode*& r);
+	static int f_sum_alt(BNode* r, int s);
 };
 
 void BTree::f_print(BNode* r, int d)
@@ -362,13 +376,14 @@ void BTree::f_del1(BNode*& r) {
 		r->right = n;
 	}
 }
+//traverse extra - 3
 int BTree::f_sum_alt(BNode* r, int s) {
 	if (r == nullptr) return 0;
-	return f_sum_alt(r->left, -1) +f_sum_alt(r->right, 1) + s * r->data;
+	return f_sum_alt(r->left, -1) + f_sum_alt(r->right, 1) + s * r->data;
 
 }
 
-
+//traverse extra - 4
 BNode* form_tree(string data) {
 	int a, b, c, d;
 	int counter = 0;
@@ -396,27 +411,26 @@ BNode* input() {
 	return form_tree(data);
 }
 
+istream& operator >> (istream& st, BTree& t)
+{
+	string s;
+	st >> s;
+	BNode* root = form_tree(s);
+	t.root = root;
+	return st;
+}
 
 int main()
 {
 	setlocale(LC_ALL, "Russian");
-	BNode* p11 = new BNode(11),
-		* p10 = new BNode(10, p11),
-		* p9 = new BNode(9),
-		* p8 = new BNode(8),
-		* p7 = new BNode(1, nullptr, p10),
-		* p6 = new BNode(6),
-		* p5 = new BNode(5, p9),
-		* p4 = new BNode(4, p8),
-		* p3 = new BNode(3, p6, p7),
-		* p2 = new BNode(1, p4, p5),
-		* p1 = new BNode(2, p2, p3);
-	BTree tree(p1);
-	tree.print();
-	cout << endl << "sum alt " << tree.sum_alt() << endl << endl;
-	tree.del1();
-	tree.enlarge(-1);
+	BTree a;
+	cin >> a;
 	
-	tree.print();
+	BTree b(a);
+	b.scale();
+	a.print();
+	cout << endl << endl;
+	b.print();
+	
 	return EXIT_SUCCESS;
 }
