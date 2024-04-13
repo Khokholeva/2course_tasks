@@ -150,6 +150,21 @@ struct BTree
 		}
 		return p;
 	}
+	BNode* getLeftGrChild() {
+		BNode* ans = nullptr;
+		if (root->left != nullptr) {
+			ans = root->left;
+			if (ans->left != nullptr) return ans->left;
+			if (ans->right != nullptr) return ans->right;
+		}
+		if (root->right != nullptr) {
+			ans = root->right;
+			if (ans->left != nullptr) return ans->left;
+			else if (ans->right != nullptr) return ans->right;
+		}
+		return nullptr;
+	
+	}
 
 	//traverse - вызовы
 	void scale() {
