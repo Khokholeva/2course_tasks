@@ -32,11 +32,11 @@ template <class D>
 void f_print(DSNode<D>* r, int d = 0)
 {
 	if (r == nullptr) return;
-	f_print(r->one, d + 3);
+	f_print(r->one, d + 1);
 	for (int i = 0; i < d; i++)
-		cout << ' ';
+		cout << '\t';
 	cout << r->key << ": " << r->data << endl;
-	f_print(r->zero, d + 3);
+	f_print(r->zero, d + 1);
 }
 
 
@@ -54,10 +54,7 @@ void f_insert(DSNode<D>*& r, int k, D d, int level) {
 		r = new DSNode<D>(k, d);
 		return;
 	}
-	if (r->key == k) {
-		cout << "Error: key already exists" << endl;
-		return;
-	}
+	if (r->key == k) return;
 	if (digit(k, level) == 0) {
 		f_insert(r->zero, k, d, level + 1);
 	}
@@ -82,6 +79,9 @@ void f_delete(DSNode<D>*& r, int k, int level) {
 			if (n == prev->zero) prev->zero = nullptr;
 			else prev->one = nullptr;
 		}
+		else {
+			r = nullptr;
+		}
 		delete n;
 		return;
 	}
@@ -90,12 +90,56 @@ void f_delete(DSNode<D>*& r, int k, int level) {
 }
 
 template <class D>
+void f_search_mask1(DSNode<D>* r, int mask, int level) {
+	if (r == nullptr) return;
+	f_search_mask1(r->one, mask, level+1);
+	if (digit(mask, level) == 0) f_search_mask1(r->zero, mask, level + 1);
+	for (int i = level; i < 32; i++) {
+		if (digit(r->key, i) == 0 and digit(mask, i) == 1) return;
+	}
+	cout << r->key << "\t" << r->data << endl;
+}
+
+template <class D>
+void f_search_mask2(DSNode<D>* r, int base, int mask, int level) {
+	if (r == nullptr) return;
+	if (digit(mask, level) == 0) {
+		f_search_mask2(r->zero, base, mask, level + 1);
+		f_search_mask2(r->one, base, mask, level + 1);
+	}
+	else if (digit(base, level) == 1) f_search_mask2(r->one, base, mask, level + 1);
+	else f_search_mask2(r->zero, base, mask, level + 1);
+
+	for (int i = level; i < 32; i++) {
+		if (digit(mask, i) == 1 and digit(r->key, i) != digit(base, i)) return;
+	}
+	cout << r->key << "\t" << r->data << endl;
+}
+
+template <class D>
+DSNode<D>* copy(DSNode<D>* r) {
+	if (r == nullptr) return nullptr;
+	DSNode<D>* p = new DSNode<D>(r->key, r->data);
+	p->zero = copy(r->zero);
+	p->one = copy(r->one);
+	return p;
+}
+
+template <class D>
 struct DSTree {
 	DSNode<D>* root;
 	DSTree(DSNode<D>* r): root(r) {}
 	DSTree(): root(nullptr) {}
+	DSTree(const DSTree& t) {
+		root = copy(t.root);
+	}
 	~DSTree() {
 		f_del(root);
+	}
+	DSTree<D>& operator = (const DSTree& t) {
+		if (this == &t) return *this;
+		root = copy(t.root);
+		return *this;
 	}
 	void print() {
 		f_print(root);
@@ -109,14 +153,34 @@ struct DSTree {
 	void del(int k) {
 		f_delete(root, k, 0);
 	}
+	void searchMask1(int mask) {
+		f_search_mask1(root, mask, 0);
+	}
+	void searchMask2(int base, int mask) {
+		f_search_mask2(root, base, mask, 0);
+	}
+	void replace() {
+		DSNode<D>* r;
+		D d;
+		for (int n = 1; n < 8; n++) {
+			r = f_search(root, 3 * n + 5, 0);
+			if (r == nullptr) continue;
+			d = r->data;
+			f_delete(root, 3*n + 5, 0);
+			f_insert(root, 10 - n, d, 0);
+		}
+	}
+	bool check() {
+		return f_check(root, 0, 0);
+	}
 };
 
 template <class D>
-void table_print(DSNode<D>* r, int w1 = 5, int w2 = 5) {
+void table_print(DSNode<D>* r) {
 	if (r == nullptr) return;
-	cout << setw(w1) << r->key << setw(w2) << r->data << endl;
-	table_print(r->zero, w1, w2);
-	table_print(r->one, w1, w2);
+	cout << r->key << "\t" << r->data << endl;
+	table_print(r->zero);
+	table_print(r->one);
 }
 
 void count_numbers() {
@@ -126,35 +190,71 @@ void count_numbers() {
 	DSTree<int> tree;
 	DSNode<int>* n;
 	int x;
-	int key_max = 0, num_max = 0;
 	while (source >> x) {
-		key_max = (key_max < x) ? x : key_max;
 		n = tree.search(x);
 		if (n == nullptr) tree.insert(x, 1);
-		else 
-		{
-			n->data += 1; 
-			num_max = (num_max < n->data) ? n->data : num_max;
-		}
-		
+		else n->data += 1;
 	}
-	int w1 = 1, w2 = 4;
-	key_max /= 10;
-	num_max /= 10;
-	while (key_max > 0) {
-		w1 += 1;
-		key_max /= 10;
-	}
-	while (num_max > 0) {
-		w2 += 1;
-		num_max /= 10;
-	}
-	table_print(tree.root, w1, w2);
+	table_print(tree.root);
+	tree.print();
+}
+
+template <class D>
+void add(DSTree<D> &t, DSNode<D>* r) {
+	if (r == nullptr) return;
+	t.insert(r->key, r->data);
+	add(t, r->zero);
+	add(t, r->one);
+}
+
+template <class D>
+DSTree<D> merge(DSTree<D> t1, DSTree<D> t2) {
+	DSTree<D> res;
+	add(res, t1.root);
+	add(res, t2.root);
+	return res;
+
+}
+
+template <class D>
+bool f_check(DSNode<D>* r, int level, int mask) {
+	if (r == nullptr) return true;
+	bool ok;
+	ok =  f_check(r->zero, level+1, mask) and f_check(r->one, level + 1, mask | 1 << level);
+	for (int i = 0; i < level; i++) if (digit(r->key, i) != digit(mask, i)) return false;
+	return ok;
 }
 
 int main()
 {
 	setlocale(LC_ALL, "Russian");
-	count_numbers();
+	srand(time(0));
+	DSTree<int> tree, t1, t2;
+	int k, d;
+	for (int i = 0; i < 5; i++) {
+		k = rand() % 1000;
+		d = rand() % 1000;
+		t1.insert(k, d);
+	}
+	for (int i = 0; i < 5; i++) {
+		k = rand() % 1000;
+		d = rand() % 1000;
+		t2.insert(k, d);
+	}
+	t1.print();
+	cout << endl;
+	t2.print();
+	cout << endl;
+	tree = merge(t1, t2);
+	cout << "merged" << endl;
+	tree.insert(11, 562);
+	tree.insert(26, 55);
+	tree.print();
+	cout << "Odd keys" << endl;
+	tree.searchMask1(1);
+	cout << "Even keys" << endl;
+	tree.searchMask2(2, 1);
+	tree.replace();
+	tree.print();
 	return EXIT_SUCCESS;
 }
