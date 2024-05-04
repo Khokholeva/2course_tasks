@@ -94,10 +94,7 @@ void f_search_mask1(DSNode<D>* r, int mask, int level) {
 	if (r == nullptr) return;
 	f_search_mask1(r->one, mask, level+1);
 	if (digit(mask, level) == 0) f_search_mask1(r->zero, mask, level + 1);
-	for (int i = level; i < 32; i++) {
-		if (digit(r->key, i) == 0 and digit(mask, i) == 1) return;
-	}
-	cout << r->key << "\t" << r->data << endl;
+	if (mask & r->key == mask) cout << r->key << "\t" << r->data << endl;
 }
 
 template <class D>
@@ -109,11 +106,7 @@ void f_search_mask2(DSNode<D>* r, int base, int mask, int level) {
 	}
 	else if (digit(base, level) == 1) f_search_mask2(r->one, base, mask, level + 1);
 	else f_search_mask2(r->zero, base, mask, level + 1);
-
-	for (int i = level; i < 32; i++) {
-		if (digit(mask, i) == 1 and digit(r->key, i) != digit(base, i)) return;
-	}
-	cout << r->key << "\t" << r->data << endl;
+	if ((r->key & mask) == (base & mask)) cout << r->key << "\t" << r->data << endl;
 }
 
 template <class D>
