@@ -251,17 +251,18 @@ struct STree
 	}
 };
 
-
-
 void del50(SNode*& r) {
 	if (r == nullptr) return;
 	if (r->key > 50) {
 		f_del(r->right);
-		r = r->left;
+		SNode* l = r->left;
+		delete r;
+		r = l;
 		del50(r);
 	}
 	else del50(r->right);
 }
+
 int main()
 {
 	setlocale(LC_ALL, "Russian");
@@ -301,6 +302,9 @@ int main()
 	t.print();
 	cout << endl << "Added 30 to the wrong place, now fixing it" << endl;
 	t.fix_leaf();
+	t.print();
+	cout << "del50" << endl;
+	del50(t.root);
 	t.print();
 	return EXIT_SUCCESS;
 }
