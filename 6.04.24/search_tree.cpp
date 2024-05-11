@@ -5,8 +5,8 @@ using namespace std;
 
 struct SNode {
 	int data, key;
-	SNode* left, * right;
-	SNode(int k, int d, SNode* l = nullptr, SNode* r = nullptr) : key(k), data(d), left(l), right(r) {}
+	SNode* left, * right, *parent;
+	SNode(int k, int d, SNode* l = nullptr, SNode* r = nullptr, SNode* p = nullptr) : key(k), data(d), left(l), right(r), parent(p) {}
 
 };
 
@@ -48,8 +48,12 @@ void f_insert(SNode*& r, int k, int d) {
 	}
 	if (r->key > k) {
 		f_insert(r->left, k, d);
+		r->left->parent = r;
 	}
-	else f_insert(r->right, k, d);
+	else {
+		f_insert(r->right, k, d);
+		r->right->parent = r;
+	}
 }
 
 void f_delete(SNode*& r, int k) {
@@ -57,26 +61,28 @@ void f_delete(SNode*& r, int k) {
 	if (r->key == k) {
 		if (r->left == nullptr) {
 			SNode* n = r->right;
+			n->parent = r->parent;
 			delete r;
 			r = n;
 			return;
 		}
 		if (r->right == nullptr) {
 			SNode* n = r->left;
+			n->parent = r->parent;
 			delete r;
 			r = n;
 			return;
 		}
 		SNode* prev = nullptr;
 		SNode* n = r->right;
-		while (n->left != nullptr) { 
+		while (n->left != nullptr) {
 			prev = n;
 			n = n->left;
 		}
 		r->key = n->key;
 		r->data = n->data;
-		if (prev == nullptr) r->right = n->right;
-		else prev->left = n->right;
+		if (prev == nullptr) { r->right = n->right; n->right->parent = r; }
+		else { prev->left = n->right; n->right->parent = prev; }
 		delete n;
 		return;
 	}
@@ -84,10 +90,30 @@ void f_delete(SNode*& r, int k) {
 	return f_delete(r->right, k);
 }
 
-bool f_check(SNode* r, int min_k=INT32_MIN, int max_k=INT32_MAX) { 
+bool f_check(SNode* r, int min_k = INT32_MIN, int max_k = INT32_MAX) {
 	if (r == nullptr) return true;
 	if (r->data < min_k or r->data > max_k) return false;
 	return f_check(r->left, min_k, r->data - 1) and f_check(r->right, r->data + 1, max_k);
+}
+
+void find_error(SNode* r, int& k, int& d) {
+	if (r == nullptr) return;
+	if (r->left != nullptr and r->left->key > r->key) {
+		k = r->left->key;
+		d = r->left->data;
+		delete r->left;
+		r->left = nullptr;
+		return;
+	}
+	if (r->right != nullptr and r->right->key < r->key) {
+		k = r->right->key;
+		d = r->right->data;
+		delete r->right;
+		r->right = nullptr;
+		return;
+	}
+	find_error(r->right, k, d);
+	find_error(r->left, k, d);
 }
 
 struct STree
@@ -95,7 +121,7 @@ struct STree
 	SNode* root;
 	STree() : root(nullptr) {}
 	STree(SNode* p) : root(p) {}
-	STree(int k, int d, SNode* left = nullptr, SNode* right = nullptr) : root(new SNode(k, d, left, right)) {}
+	STree(int k, int d, SNode* left = nullptr, SNode* right = nullptr, SNode* parent = nullptr) : root(new SNode(k, d, left, right, parent)) {}
 	~STree() {
 		f_del(root);
 	}
@@ -120,15 +146,18 @@ struct STree
 	}
 	void insert_cyc(int k, int d) {
 		SNode** p = &root;
+		SNode* prev = nullptr;
 		while (*p != nullptr) {
 			if ((*p)->key == k) {
 				cout << "Error: key already exists" << endl;
 				return;
 			}
+			prev =* p;
 			if ((*p)->key < k) p = &((*p)->right);
 			else if ((*p)->key > k) p = &((*p)->left);
 		}
 		*p = new SNode(k, d);
+		(*p)->parent = prev;
 	}
 	void delete_rec(int k) {
 		f_delete(root, k);
@@ -178,36 +207,100 @@ struct STree
 	bool check() {
 		return f_check(root, INT32_MIN, INT32_MAX);
 	}
+	void find_nearest(int k, SNode*& low, SNode*& high) {
+		SNode* r = root;
+		SNode* last_h = nullptr;
+		SNode* last_l = nullptr;
+		while (r != nullptr) {
+			if (r->key == k) {
+				low = r;
+				high = r;
+				return;
+			}
+			if (r->key > k) {
+				last_h = r;
+				r = r->left;
+			}
+			else {
+				last_l = r;
+				r = r->right;
+			}
+		}
+		low = last_l;
+		high = last_h;
+	}
+	SNode* next(SNode* r) {
+		if (r->right == nullptr) { 
+			SNode* n = r->parent;
+			while (n != nullptr) {
+				if (n->left == r) return n;
+				r = n;
+				n = n->parent;
+			}
+			return n;
+			
+		}
+		SNode* n = r->right;
+		while (n->left != nullptr) n = n->left;
+		return n;
+	}
+	void fix_leaf() {
+		int k, d;
+		find_error(root, k, d);
+		this->insert_rec(k, d);
+	}
 };
 
+
+
+void del50(SNode*& r) {
+	if (r == nullptr) return;
+	if (r->key > 50) {
+		f_del(r->right);
+		r = r->left;
+		del50(r);
+	}
+	else del50(r->right);
+}
 int main()
 {
 	setlocale(LC_ALL, "Russian");
-	SNode* p12 = new SNode(12, 12),
-		* p10 = new SNode(10, 10),
-		* p11 = new SNode(11, 11, p10, p12),
-		* p9 = new SNode(9, 9, nullptr, p11),
-		* p4 = new SNode(4, 4),
-		* p3 = new SNode(3, 3, nullptr, p4),
-		* p6 = new SNode(6, 6),
-		* p5 = new SNode(5, 5, p3, p6),
-		* p7 = new SNode(7, 7, p5),
-		* p1 = new SNode(1, 1),
-		* p2 = new SNode(2, 2, p1, p7),
-		* p8 = new SNode(8, 8, p2, p9);
-	STree t(p8);
+	int seed = time(0);
+	cout << seed << endl;
+	srand(seed);
+	STree t;
+	for (int i = 0; i < 15; i++) {
+		t.insert_rec(rand() % 100, i);
+	}
 	t.print();
 	cout << endl << endl;
-	t.delete_cyc(8);
-	t.delete_rec(2);
+	int x;
+	cout << "Getting surrounding and next in order nodes" << endl;
+	cin >> x;
+	SNode* a, * b;
+	while (x != -1) {
+		t.find_nearest(x, a, b);
+		if (a == nullptr) cout << "Nearest: -" << " ";
+		else cout << "Nearest: " << a->key << " ";
+		if (b == nullptr) cout << "-" << endl;
+		else cout << b->key << endl;
+		SNode* s = t.search_rec(x);
+		if (s != nullptr) {
+			s = t.next(s);
+			if (s == nullptr) cout << "Next: -" << endl;
+			else cout << "Next: " << s->key << endl;
+		}
+		cin >> x;
+		
+	}
+	//hoping that there are keys less than 30 and there is no 30 in the tree already
+	SNode* p = new SNode(30, 30);
+	SNode* r = t.root;
+	while (r->left != nullptr) r = r->left;
+	r->left = p;
 	t.print();
-	cout << endl << endl;
-	cout << boolalpha << t.check() << endl;
-	p6->key = 8;
-	p6->data = 8; 
+	cout << endl << "Added 30 to the wrong place, now fixing it" << endl;
+	t.fix_leaf();
 	t.print();
-	cout << endl << endl;
-	cout << boolalpha << t.check() << endl;
-
 	return EXIT_SUCCESS;
 }
