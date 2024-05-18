@@ -62,11 +62,13 @@ struct BTTree
 	}
 	Item<K, T> search(K k) {
 		BTNode* r = root;
-		while (r->ar[0].down != nullptr) {
+		int h = height;
+		while (h > 1) {
 			int ind = -1;
 			while (ind < r->n - 1 and r->ar[ind + 1].key <= k) ind += 1;
 			if (ind == -1) return nullptr;
 			r = r->ar[ind].down;
+			h -= 1;
 		}
 		for (int i = 0; i < r->n; i++) {
 			if (r->ar[i].key == k) return r->ar[i];
@@ -131,6 +133,85 @@ struct BTTree
 		root = new_r;
 		height++;
 	}
+	void removeB(BTNode<K, T>* p, int ind) {
+		for (int i = ind; i < p->n - 1; i++) {
+			p->ar[i] = p->ar[i + 1];
+		}
+		p->n--;
+	}
+	void join(BTNode<K, T>* p, int n) {
+		BTNode<K, T> *r = p->ar[n].down;
+		BTNode<K, T> *s = p->ar[n + 1].down;
+		for (int i = 0; i < s->n; i++) {
+			r->ar[r->n + i] = s->ar[i];
+		}
+		r->n += s->n;
+		delete s;
+		removeB(p, n + 1);
+	}
+	void pass_forward(BTNode<K, T>* p, int n) {
+		BTNode<K, T> *r = p->ar[n].down;
+		BTNode<K, T> *s = p->ar[n + 1].down;
+		Item<K, T> m = r->ar[r->n-1];
+		removeB(r, r->n - 1);
+		insertB(s, 0, m);
+		p->ar[n + 1].key = s->ar[0].key;
+		
+	}
+	void pass_backward(BTNode<K, T>* p, int n) {
+		BTNode<K, T> *r = p->ar[n].down;
+		BTNode<K, T> *s = p->ar[n + 1].down;
+		Item<K, T> m = s->ar[0];
+		removeB(s, 0);
+		insertB(r, r->n, m);
+		p->ar[n + 1].key = s->ar[0].key;
+		
+	}
+	void correct_filling(BTNode<K, T>* p, int n) {
+		if (n > 0) {
+			if (p->ar[n - 1].down->n > N / 2) pass_forward(p, n - 1);
+			else join(p, n - 1);
+		}
+		else if (n < p->n - 1) {
+			if (p->ar[n + 1].down->n > N / 2) pass_backward(p, n);
+			else join(p, n);
+		}
+	}
+	void removeR(BTNode<K, T>* p, K k, int h, bool& corr_key, bool& corr_fill) {
+		if (h == 1) {
+			for (int i = 0; i < p->n; i++) {
+				if (p->ar[i].key == k) {
+					removeB(p, i);
+					corr_key = i == 0;
+					corr_fill = p->n < N / 2;
+					return;
+				}
+			}
+		}
+		if (k < p->ar[0].key) return;
+		int t = p->n - 1;
+		for (int i = 1; i < p->n; i++) {
+			if (p->ar[i].key > k) {
+				t = i - 1;
+				break;
+			}
+		}
+		removeR(p->ar[t].down, k, h - 1, corr_key, corr_fill);
+		if (corr_key) p->ar[t].key = p->ar[t].down->ar[0].key;
+		if (corr_fill) correct_filling(p, t);
+		corr_key = t == 0;
+		corr_fill = p->n < N / 2;
+	}
+	void remove(K k) {
+		bool res_k = false, res_f = false;
+		removeR(root, k, height, res_k, res_f);
+		if (root->n == 1 and height > 1) {
+			BTNode<K, T> *del = root;
+			root = root->ar[0].down;
+			delete del;
+			height--;
+		}
+	}
 };
 
 int main()
@@ -144,5 +225,12 @@ int main()
 		t.insert(rand()% 100, i);
 	}
 	t.print();
+	int k;
+	cin >> k;
+	while (k != -1) {
+		t.remove(k);
+		t.print();
+		cin >> k;
+	}
 	return EXIT_SUCCESS;
 }
