@@ -10,6 +10,7 @@ class Payment
 public:
 	Payment(string s): address(s) {}
 	virtual double calculate() = 0;
+	virtual ~Payment() {}
 };
 
 class Heat : public Payment 
@@ -47,7 +48,6 @@ public:
 int main()
 {
 	setlocale(LC_ALL, "Russian");
-	Payment** bill = new Payment*[7];
 	Heat heat_1("1, A street", 150);
 	Heat heat_2("2, A street", 80);
 	Water water_1("1, A street", 4);
@@ -55,13 +55,7 @@ int main()
 	Water water_3("3, A street", 3);
 	Electricity elec_1("1, A street", 30);
 	Electricity elec_2("2, A street", 75.6);
-	bill[0] = &heat_1;
-	bill[1] = &heat_2;
-	bill[2] = &water_1;
-	bill[3] = &water_2;
-	bill[4] = &water_3;
-	bill[5] = &elec_1;
-	bill[6] = &elec_2;
+	Payment* bill[7] = { &heat_1, &heat_2, &water_1, &water_2, &water_3, &elec_1, &elec_2 };
 
 	double res = 0;
 	double t;
